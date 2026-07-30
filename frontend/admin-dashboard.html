@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Panel — Civic Connect</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/aos@2.3.1/dist/aos.css">
+<link rel="stylesheet" href="css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="brand"><span class="dot" style="background:var(--indigo); box-shadow:0 0 12px var(--indigo);"></span> CIVIC CONNECT <span class="badge assigned" style="margin-left:8px;">ADMIN</span></div>
+  <button class="hamburger icon-btn"><i class="fa-solid fa-bars"></i></button>
+  <ul class="nav-links">
+    <li><a href="admin-dashboard.html" class="active">All Complaints</a></li>
+    <li><a href="analytics.html">Analytics</a></li>
+    <li><a href="map.html">Live Map</a></li>
+  </ul>
+  <div class="flex gap-12">
+    <div class="theme-toggle" onclick="toggleTheme()"><div class="knob"><i class="fa-solid fa-moon"></i></div></div>
+    <div class="flex gap-12" id="navUserSlot"></div>
+  </div>
+</nav>
+
+<div class="container section">
+  <div class="flex-between" data-aos="fade-up" style="flex-wrap:wrap; gap:14px; margin-bottom:22px;">
+    <div><h2>Municipal Complaint Console</h2><p class="text-muted">Every citizen report, in one place.</p></div>
+    <button class="btn btn-primary" onclick="generateReport()"><i class="fa-solid fa-file-arrow-down"></i> Generate CSV Report</button>
+  </div>
+
+  <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); margin-bottom:24px;" data-aos="fade-up">
+    <div class="glass stat-card"><div class="icon-wrap" style="background:rgba(23,214,196,.14); color:var(--teal);"><i class="fa-solid fa-clipboard-list"></i></div><div class="num" id="aTotal">0</div><div class="label">Total Complaints</div></div>
+    <div class="glass stat-card"><div class="icon-wrap" style="background:rgba(255,93,108,.14); color:var(--red);"><i class="fa-solid fa-hourglass-half"></i></div><div class="num" id="aPending">0</div><div class="label">Pending</div></div>
+    <div class="glass stat-card"><div class="icon-wrap" style="background:rgba(244,201,59,.14); color:var(--yellow);"><i class="fa-solid fa-person-digging"></i></div><div class="num" id="aProgress">0</div><div class="label">In Progress</div></div>
+    <div class="glass stat-card"><div class="icon-wrap" style="background:rgba(51,209,122,.14); color:var(--green);"><i class="fa-solid fa-circle-check"></i></div><div class="num" id="aResolved">0</div><div class="label">Resolved</div></div>
+    <div class="glass stat-card"><div class="icon-wrap" style="background:rgba(108,123,247,.14); color:var(--indigo);"><i class="fa-solid fa-users"></i></div><div class="num" id="aUsers">0</div><div class="label">Registered Citizens</div></div>
+  </div>
+
+  <div class="glass card" data-aos="fade-up" style="margin-bottom:22px;">
+    <div class="grid" style="grid-template-columns:2fr 1fr 1fr 1fr; gap:14px;">
+      <div class="input-icon-wrap"><i class="fa-solid fa-magnifying-glass"></i><input class="input" id="searchBox" placeholder="Search ID, title, citizen..."></div>
+      <select class="input" id="catFilter"><option value="">All Categories</option></select>
+      <select class="input" id="statusFilter"><option value="">All Statuses</option></select>
+      <select class="input" id="deptFilter"><option value="">All Departments</option></select>
+    </div>
+  </div>
+
+  <div class="glass card" data-aos="fade-up">
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>ID</th><th>Citizen</th><th>Issue</th><th>Category</th><th>Severity</th><th>Department</th><th>Status</th><th>Filed</th><th>Actions</th></tr></thead>
+        <tbody id="adminBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+<script src="js/db.js"></script>
+<script src="js/common.js"></script>
+<script>
+const admin = requireAuth('admin');
+const catFilter = document.getElementById('catFilter'), statusFilter = document.getElementById('statusFilter'), deptFilter = document.getElementById('deptFilter');
+CATEGORIES.forEach(c=> catFilter.innerHTML += `<option value="${c.id}">${c.label}</option>`);
+STATUS_FLOW.forEach(s=> statusFilter.innerHTML += `<option value="${s}">${s}</option>`);
+DEPARTMENTS.forEach(d=> deptFilter.innerHTML += `<option value="${d}">${d}</option>`);
+
+function renderStats(){
+  const all = ComplaintsAPI.all();
+  document.getElementById('aTotal').textContent = all.length;
+  document.getElementById('aPending').textContent = all.filter(c=>c.status==='Pending').length;
+  document.getElementById('aProgress').textContent = all.filter(c=>['Verified','Assigned','In Progress'].includes(c.status)).length;
+  document.getElementById('aResolved').textContent = all.filter(c=>c.status==='Resolved').length;
+  document.getElementById('aUsers').textContent = UsersAPI.all().filter(u=>u.role==='citizen').length;
+}
+
+function renderTable(){
+  const q = document.getElementById('searchBox').value.toLowerCase();
+  const cat = catFilter.value, status = statusFilter.value, dept = deptFilter.value;
+  let list = ComplaintsAPI.all();
+  if(q) list = list.filter(c=> c.id.toLowerCase().includes(q) || c.title.toLowerCase().includes(q) || c.userName.toLowerCase().includes(q));
+  if(cat) list = list.filter(c=> c.category===cat);
+  if(status) list = list.filter(c=> c.status===status);
+  if(dept) list = list.filter(c=> c.department===dept);
+
+  document.getElementById('adminBody').innerHTML = list.length ? list.map(c=>`
+    <tr>
+      <td class="mono">${c.id}</td>
+      <td>${c.userName}</td>
+      <td style="max-width:200px;">${c.title}</td>
+      <td>${c.categoryLabel}</td>
+      <td><span class="badge ${severityBadgeClass(c.severity)}">${c.severity}</span></td>
+      <td style="font-size:.8rem;">${c.department}</td>
+      <td><span class="badge ${statusBadgeClass(c.status)}">${c.status}</span></td>
+      <td class="text-muted" style="font-size:.78rem;">${formatDate(c.createdAt)}</td>
+      <td class="flex gap-8">
+        <button class="btn btn-outline btn-sm" onclick="manageComplaint('${c.id}')"><i class="fa-solid fa-pen"></i></button>
+        <button class="btn btn-danger btn-sm" onclick="deleteComplaint('${c.id}')"><i class="fa-solid fa-trash"></i></button>
+      </td>
+    </tr>`).join('') : `<tr><td colspan="9" class="text-muted center" style="padding:30px;">No complaints match your filters.</td></tr>`;
+  renderStats();
+}
+['searchBox'].forEach(id=> document.getElementById(id).addEventListener('input', renderTable));
+[catFilter, statusFilter, deptFilter].forEach(el=> el.addEventListener('change', renderTable));
+renderTable();
+
+function manageComplaint(id){
+  const c = ComplaintsAPI.byId(id);
+  Swal.fire({
+    title: `Manage ${c.id}`,
+    width: 560,
+    background:'var(--bg-1)', color:'var(--text-hi)',
+    html: `
+      <div style="text-align:left; font-size:.9rem;">
+        <p style="margin-bottom:10px;"><b>${c.title}</b></p>
+        <p class="text-muted" style="margin-bottom:14px; font-size:.85rem;">${c.description}</p>
+        <label style="font-weight:600; font-size:.8rem;">Status</label>
+        <select id="swStatus" class="swal2-select" style="width:100%; margin:6px 0 14px;">
+          ${STATUS_FLOW.map(s=>`<option value="${s}" ${s===c.status?'selected':''}>${s}</option>`).join('')}
+        </select>
+        <label style="font-weight:600; font-size:.8rem;">Assign Department</label>
+        <select id="swDept" class="swal2-select" style="width:100%; margin:6px 0 14px;">
+          ${DEPARTMENTS.map(d=>`<option value="${d}" ${d===c.department?'selected':''}>${d}</option>`).join('')}
+        </select>
+        <label style="font-weight:600; font-size:.8rem;">Add Remark</label>
+        <textarea id="swRemark" class="swal2-textarea" style="width:100%; margin:6px 0 14px;" placeholder="e.g. Team dispatched, ETA 2 days"></textarea>
+        <label style="font-weight:600; font-size:.8rem;">Completion Photo (if resolving)</label>
+        <input type="file" id="swPhoto" accept="image/*" style="margin:6px 0;">
+      </div>
+    `,
+    showCancelButton:true, confirmButtonText:'Save Changes', confirmButtonColor:'#17d6c4', cancelButtonColor:'#7e88a6',
+    preConfirm: ()=>{
+      const status = document.getElementById('swStatus').value;
+      const department = document.getElementById('swDept').value;
+      const remark = document.getElementById('swRemark').value.trim();
+      const fileInput = document.getElementById('swPhoto');
+      return new Promise(resolve=>{
+        if(fileInput.files[0]){
+          const reader = new FileReader();
+          reader.onload = ev=> resolve({status, department, remark, completionPhoto: ev.target.result});
+          reader.readAsDataURL(fileInput.files[0]);
+        } else resolve({status, department, remark, completionPhoto:null});
+      });
+    }
+  }).then(res=>{
+    if(res.isConfirmed){
+      const { status, department, remark, completionPhoto } = res.value;
+      if(department !== c.department) ComplaintsAPI.assignDepartment(c.id, department);
+      ComplaintsAPI.updateStatus(c.id, status, { remark: remark || undefined, completionPhoto: completionPhoto || undefined, department });
+      Swal.fire({icon:'success', title:'Complaint updated', background:'var(--bg-1)', color:'var(--text-hi)', confirmButtonColor:'#17d6c4'});
+      renderTable();
+    }
+  });
+}
+
+function deleteComplaint(id){
+  Swal.fire({
+    icon:'warning', title:'Delete this complaint?', text:'Use this only for fake or duplicate reports. This cannot be undone.',
+    showCancelButton:true, confirmButtonText:'Delete', confirmButtonColor:'#ff5d6c',
+    background:'var(--bg-1)', color:'var(--text-hi)'
+  }).then(res=>{
+    if(res.isConfirmed){ ComplaintsAPI.remove(id); renderTable(); Swal.fire({icon:'success', title:'Removed', background:'var(--bg-1)', color:'var(--text-hi)', confirmButtonColor:'#17d6c4'}); }
+  });
+}
+
+function generateReport(){
+  const list = ComplaintsAPI.all();
+  const headers = ['ID','Citizen','Title','Category','Severity','Department','Status','Area','Filed','Updated'];
+  const rows = list.map(c=>[c.id,c.userName,c.title,c.categoryLabel,c.severity,c.department,c.status,c.area,c.createdAt,c.updatedAt]);
+  const csv = [headers, ...rows].map(r=> r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob([csv], {type:'text/csv'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = `civic-connect-report-${Date.now()}.csv`; a.click();
+  URL.revokeObjectURL(url);
+}
+</script>
+</body>
+</html>

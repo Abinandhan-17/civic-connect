@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Live Issue Map — Civic Connect</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="css/style.css">
+<style>
+  #map{ height:64vh; width:100%; border-radius:var(--radius-lg); overflow:hidden; }
+  .leaflet-popup-content-wrapper{ background:var(--bg-1); color:var(--text-hi); border-radius:12px; }
+  .leaflet-popup-tip{ background:var(--bg-1); }
+</style>
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="brand"><span class="dot"></span> CIVIC CONNECT</div>
+  <button class="hamburger icon-btn"><i class="fa-solid fa-bars"></i></button>
+  <ul class="nav-links">
+    <li><a href="index.html" data-i18n="nav_home">Home</a></li>
+    <li><a href="dashboard.html" data-i18n="nav_dashboard">Dashboard</a></li>
+    <li><a href="report-issue.html" data-i18n="nav_report">Report Issue</a></li>
+    <li><a href="track-complaint.html" data-i18n="nav_track">Track Complaint</a></li>
+    <li><a href="map.html" class="active" data-i18n="nav_map">Live Map</a></li>
+  </ul>
+  <div class="flex gap-12">
+    <div class="theme-toggle" onclick="toggleTheme()"><div class="knob"><i class="fa-solid fa-moon"></i></div></div>
+    <div class="flex gap-12" id="navUserSlot"></div>
+  </div>
+</nav>
+
+<div class="container section">
+  <div class="flex-between" style="flex-wrap:wrap; gap:14px; margin-bottom:20px;">
+    <div><h2>Live Issue Map</h2><p class="text-muted">Every reported issue in the city, plotted in real time.</p></div>
+    <div class="flex gap-16 glass" style="padding:10px 18px; border-radius:12px;">
+      <span><span class="legend-dot" style="background:#ff5d6c;"></span>Pending</span>
+      <span><span class="legend-dot" style="background:#f4c93b;"></span>In Progress</span>
+      <span><span class="legend-dot" style="background:#33d17a;"></span>Resolved</span>
+    </div>
+  </div>
+  <div class="glass card" style="padding:10px;">
+    <div id="map"></div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="js/db.js"></script>
+<script src="js/common.js"></script>
+<script>
+const map = L.map('map').setView([11.0168, 76.9558], 13);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution:'&copy; OpenStreetMap contributors', maxZoom:19
+}).addTo(map);
+
+ComplaintsAPI.all().forEach(c=>{
+  const color = markerColor(c.status);
+  const marker = L.circleMarker([c.lat, c.lng], {
+    radius:10, color, fillColor:color, fillOpacity:0.85, weight:2
+  }).addTo(map);
+  marker.bindPopup(`
+    <b>${c.title}</b><br>
+    <span class="mono">${c.id}</span><br>
+    ${c.categoryLabel} · ${c.area}<br>
+    Status: <b>${c.status}</b><br>
+    <a href="track-complaint.html?id=${c.id}" style="color:#17d6c4;">View details →</a>
+  `);
+});
+</script>
+</body>
+</html>

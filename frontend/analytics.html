@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Analytics — Civic Connect</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/aos@2.3.1/dist/aos.css">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="brand"><span class="dot"></span> CIVIC CONNECT</div>
+  <button class="hamburger icon-btn"><i class="fa-solid fa-bars"></i></button>
+  <ul class="nav-links">
+    <li><a href="index.html" data-i18n="nav_home">Home</a></li>
+    <li><a href="dashboard.html" data-i18n="nav_dashboard">Dashboard</a></li>
+    <li><a href="report-issue.html" data-i18n="nav_report">Report Issue</a></li>
+    <li><a href="track-complaint.html" data-i18n="nav_track">Track Complaint</a></li>
+    <li><a href="analytics.html" class="active" data-i18n="nav_analytics">Analytics</a></li>
+  </ul>
+  <div class="flex gap-12">
+    <div class="theme-toggle" onclick="toggleTheme()"><div class="knob"><i class="fa-solid fa-moon"></i></div></div>
+    <div class="flex gap-12" id="navUserSlot"></div>
+  </div>
+</nav>
+
+<div class="container section">
+  <div data-aos="fade-up" style="margin-bottom:26px;">
+    <h2><i class="fa-solid fa-chart-pie" style="color:var(--teal);"></i> City-wide Analytics</h2>
+    <p class="text-muted">Aggregated insight across all reported issues.</p>
+  </div>
+
+  <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); margin-bottom:26px;" data-aos="fade-up">
+    <div class="glass stat-card"><div class="icon-wrap" style="background:rgba(23,214,196,.14); color:var(--teal);"><i class="fa-solid fa-clipboard-list"></i></div><div class="num" id="kpiTotal">0</div><div class="label">Total Complaints</div></div>
+    <div class="glass stat-card"><div class="icon-wrap" style="background:rgba(108,123,247,.14); color:var(--indigo);"><i class="fa-solid fa-users"></i></div><div class="num" id="kpiUsers">0</div><div class="label">Total Active Users</div></div>
+    <div class="glass stat-card"><div class="icon-wrap" style="background:rgba(246,185,59,.14); color:var(--amber);"><i class="fa-solid fa-clock"></i></div><div class="num" id="kpiAvgTime">—</div><div class="label">Avg. Resolution Time</div></div>
+    <div class="glass stat-card"><div class="icon-wrap" style="background:rgba(51,209,122,.14); color:var(--green);"><i class="fa-solid fa-location-dot"></i></div><div class="num" id="kpiTopArea">—</div><div class="label">Most Reported Area</div></div>
+  </div>
+
+  <div class="grid" style="grid-template-columns:1fr 1fr; gap:22px; margin-bottom:22px;" data-aos="fade-up">
+    <div class="glass card">
+      <h3 style="margin-bottom:14px; font-size:1rem;">Complaints by Status</h3>
+      <canvas id="statusChart" height="220"></canvas>
+    </div>
+    <div class="glass card">
+      <h3 style="margin-bottom:14px; font-size:1rem;">Category-wise Reports</h3>
+      <canvas id="categoryChart" height="220"></canvas>
+    </div>
+  </div>
+
+  <div class="grid" style="grid-template-columns:2fr 1fr; gap:22px;" data-aos="fade-up">
+    <div class="glass card">
+      <h3 style="margin-bottom:14px; font-size:1rem;">Monthly Complaint Trend</h3>
+      <canvas id="monthlyChart" height="200"></canvas>
+    </div>
+    <div class="glass card">
+      <h3 style="margin-bottom:14px; font-size:1rem;">Most Reported Areas</h3>
+      <div id="areaList" style="display:flex; flex-direction:column; gap:12px;"></div>
+    </div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<script src="js/db.js"></script>
+<script src="js/common.js"></script>
+<script>
+const all = ComplaintsAPI.all();
+const users = UsersAPI.all().filter(u=>u.role==='citizen');
+document.getElementById('kpiTotal').textContent = all.length;
+document.getElementById('kpiUsers').textContent = users.length;
+
+const resolved = all.filter(c=>c.status==='Resolved');
+const avgHrs = resolved.length ? resolved.reduce((sum,c)=> sum + (new Date(c.updatedAt)-new Date(c.createdAt))/36e5, 0)/resolved.length : 0;
+document.getElementById('kpiAvgTime').textContent = resolved.length ? Math.round(avgHrs)+'h' : '—';
+
+const areaCounts = {};
+all.forEach(c=> areaCounts[c.area] = (areaCounts[c.area]||0)+1);
+const topAreaEntry = Object.entries(areaCounts).sort((a,b)=>b[1]-a[1])[0];
+document.getElementById('kpiTopArea').textContent = topAreaEntry ? topAreaEntry[0] : '—';
+document.getElementById('areaList').innerHTML = Object.entries(areaCounts).sort((a,b)=>b[1]-a[1]).slice(0,6).map(([area,count])=>`
+  <div>
+    <div class="flex-between" style="margin-bottom:6px; font-size:.85rem;"><span>${area}</span><b>${count}</b></div>
+    <div class="progress-track" style="height:6px;"><div class="progress-fill" style="width:${(count/all.length*100).toFixed(0)}%"></div></div>
+  </div>`).join('') || '<p class="text-muted">No data yet.</p>';
+
+const chartColors = { grid:'rgba(150,160,200,0.12)', text: getComputedStyle(document.body).getPropertyValue('--text-mid') };
+Chart.defaults.color = '#9aa5c3';
+Chart.defaults.borderColor = 'rgba(150,160,200,0.12)';
+
+const statusCounts = {};
+STATUS_FLOW.forEach(s=> statusCounts[s] = all.filter(c=>c.status===s).length);
+new Chart(document.getElementById('statusChart'), {
+  type:'doughnut',
+  data:{ labels:Object.keys(statusCounts), datasets:[{ data:Object.values(statusCounts),
+    backgroundColor:['#ff5d6c','#6c7bf7','#a78bfa','#f4c93b','#33d17a'] }] },
+  options:{ plugins:{ legend:{ position:'bottom', labels:{ boxWidth:10 } } } }
+});
+
+const catCounts = CATEGORIES.map(c=> all.filter(x=>x.category===c.id).length);
+new Chart(document.getElementById('categoryChart'), {
+  type:'bar',
+  data:{ labels:CATEGORIES.map(c=>c.label), datasets:[{ label:'Reports', data:catCounts, backgroundColor:'#17d6c4', borderRadius:6 }] },
+  options:{ indexAxis:'y', plugins:{legend:{display:false}}, scales:{ x:{ grid:{color:'rgba(150,160,200,0.1)'} }, y:{ grid:{display:false} } } }
+});
+
+const months = []; const monthCounts = [];
+for(let i=5;i>=0;i--){
+  const d = new Date(); d.setMonth(d.getMonth()-i);
+  const label = d.toLocaleDateString('en-IN',{month:'short'});
+  months.push(label);
+  monthCounts.push(all.filter(c=>{
+    const cd = new Date(c.createdAt);
+    return cd.getMonth()===d.getMonth() && cd.getFullYear()===d.getFullYear();
+  }).length);
+}
+new Chart(document.getElementById('monthlyChart'), {
+  type:'line',
+  data:{ labels:months, datasets:[{ label:'Complaints filed', data:monthCounts, borderColor:'#6c7bf7', backgroundColor:'rgba(108,123,247,0.15)', tension:.4, fill:true, pointBackgroundColor:'#6c7bf7' }] },
+  options:{ plugins:{legend:{display:false}}, scales:{ x:{ grid:{display:false} }, y:{ grid:{color:'rgba(150,160,200,0.1)'}, beginAtZero:true } } }
+});
+</script>
+</body>
+</html>

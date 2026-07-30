@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Dashboard — Civic Connect</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/aos@2.3.1/dist/aos.css">
+<link rel="stylesheet" href="css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="brand"><span class="dot"></span> CIVIC CONNECT</div>
+  <button class="hamburger icon-btn"><i class="fa-solid fa-bars"></i></button>
+  <ul class="nav-links">
+    <li><a href="index.html" data-i18n="nav_home">Home</a></li>
+    <li><a href="dashboard.html" class="active" data-i18n="nav_dashboard">Dashboard</a></li>
+    <li><a href="report-issue.html" data-i18n="nav_report">Report Issue</a></li>
+    <li><a href="track-complaint.html" data-i18n="nav_track">Track Complaint</a></li>
+    <li><a href="map.html" data-i18n="nav_map">Live Map</a></li>
+    <li><a href="analytics.html" data-i18n="nav_analytics">Analytics</a></li>
+  </ul>
+  <div class="flex gap-12">
+    <div class="lang-toggle"><span data-lang="en" onclick="applyLang('en')" class="active">EN</span><span data-lang="ta" onclick="applyLang('ta')">தமிழ்</span></div>
+    <div class="theme-toggle" onclick="toggleTheme()"><div class="knob"><i class="fa-solid fa-moon"></i></div></div>
+    <div class="flex gap-12" id="navUserSlot"></div>
+  </div>
+</nav>
+
+<div class="container section">
+  <div class="flex-between" data-aos="fade-up" style="flex-wrap:wrap; gap:14px;">
+    <div>
+      <h2 id="welcomeMsg">Welcome back!</h2>
+      <p class="text-muted">Here's what's happening with your reports.</p>
+    </div>
+    <a href="report-issue.html" class="btn btn-primary"><i class="fa-solid fa-circle-plus"></i> Report New Issue</a>
+  </div>
+
+  <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); margin-top:28px;" data-aos="fade-up">
+    <div class="glass stat-card">
+      <div class="icon-wrap" style="background:rgba(23,214,196,0.14); color:var(--teal);"><i class="fa-solid fa-clipboard-list"></i></div>
+      <div class="num" id="statTotal">0</div><div class="label" data-i18n="stat_total">Total Complaints</div>
+    </div>
+    <div class="glass stat-card">
+      <div class="icon-wrap" style="background:rgba(255,93,108,0.14); color:var(--red);"><i class="fa-solid fa-hourglass-half"></i></div>
+      <div class="num" id="statPending">0</div><div class="label" data-i18n="stat_pending">Pending Issues</div>
+    </div>
+    <div class="glass stat-card">
+      <div class="icon-wrap" style="background:rgba(244,201,59,0.14); color:var(--yellow);"><i class="fa-solid fa-person-digging"></i></div>
+      <div class="num" id="statProgress">0</div><div class="label" data-i18n="stat_progress">In Progress</div>
+    </div>
+    <div class="glass stat-card">
+      <div class="icon-wrap" style="background:rgba(51,209,122,0.14); color:var(--green);"><i class="fa-solid fa-circle-check"></i></div>
+      <div class="num" id="statResolved">0</div><div class="label" data-i18n="stat_resolved">Resolved Issues</div>
+    </div>
+  </div>
+
+  <div class="dash-layout" style="margin-top:30px;">
+    <div style="flex:2; min-width:0;">
+      <div class="glass card" data-aos="fade-up">
+        <div class="flex-between" style="margin-bottom:16px;">
+          <h3 data-i18n="recent_complaints">Recent Complaints</h3>
+          <a href="track-complaint.html" class="text-muted" style="font-size:.85rem;">View all <i class="fa-solid fa-arrow-right"></i></a>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>ID</th><th>Issue</th><th>Category</th><th>Status</th><th>Date</th><th></th></tr></thead>
+            <tbody id="recentBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="sidebar" id="notifications">
+      <div class="glass card" style="margin-bottom:20px;">
+        <div class="flex-between" style="margin-bottom:14px;">
+          <h3 data-i18n="notifications">Notifications</h3>
+          <button class="btn btn-ghost btn-sm" onclick="markAllRead()"><i class="fa-solid fa-check-double"></i></button>
+        </div>
+        <div id="notifList" style="display:flex; flex-direction:column; gap:12px; max-height:340px; overflow:auto;"></div>
+      </div>
+
+      <div class="glass card">
+        <h3 style="margin-bottom:14px;" data-i18n="your_profile">Your Profile</h3>
+        <div class="flex gap-12" style="margin-bottom:14px;">
+          <div class="avatar" id="profAvatar" style="width:52px;height:52px;font-size:1.1rem;"></div>
+          <div>
+            <div style="font-weight:700;" id="profName"></div>
+            <div class="text-muted" style="font-size:.82rem;" id="profEmail"></div>
+          </div>
+        </div>
+        <div class="text-muted" style="font-size:.85rem; margin-bottom:14px;"><i class="fa-solid fa-location-dot"></i> <span id="profArea">—</span></div>
+        <a href="profile.html" class="btn btn-outline btn-block btn-sm"><i class="fa-solid fa-gear"></i> Manage Profile</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<a href="report-issue.html" class="fab" title="Report an Issue"><i class="fa-solid fa-plus"></i></a>
+
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+<script src="js/db.js"></script>
+<script src="js/common.js"></script>
+<script>
+const user = requireAuth('citizen');
+if(user){
+  document.getElementById('welcomeMsg').textContent = `Welcome back, ${user.name.split(' ')[0]}!`;
+  const stats = ComplaintsAPI.stats(user.id);
+  document.getElementById('statTotal').textContent = stats.total;
+  document.getElementById('statPending').textContent = stats.pending;
+  document.getElementById('statProgress').textContent = stats.inProgress;
+  document.getElementById('statResolved').textContent = stats.resolved;
+
+  const recent = ComplaintsAPI.byUser(user.id).slice(0,6);
+  document.getElementById('recentBody').innerHTML = recent.length ? recent.map(c=>`
+    <tr>
+      <td class="mono">${c.id}</td>
+      <td>${c.title}</td>
+      <td>${c.categoryLabel}</td>
+      <td><span class="badge ${statusBadgeClass(c.status)}">${c.status}</span></td>
+      <td class="text-muted" style="font-size:.8rem;">${formatDate(c.createdAt)}</td>
+      <td><a href="track-complaint.html?id=${c.id}" class="btn btn-ghost btn-sm">View</a></td>
+    </tr>`).join('') : `<tr><td colspan="6" class="text-muted center" style="padding:30px;">No complaints yet — report your first issue!</td></tr>`;
+
+  function renderNotifs(){
+    const notifs = NotifsAPI.byUser(user.id);
+    document.getElementById('notifList').innerHTML = notifs.length ? notifs.map(n=>`
+      <div class="glass" style="padding:12px 14px; ${n.read?'opacity:.6;':''}">
+        <div class="flex-between"><span class="badge ${n.type==='success'?'resolved':'verified'}" style="font-size:.65rem;">${n.type}</span><span class="text-low" style="font-size:.7rem;">${formatDate(n.at)}</span></div>
+        <p style="margin-top:8px; font-size:.85rem;">${n.text}</p>
+      </div>`).join('') : `<p class="text-muted center" style="padding:20px;">No notifications yet.</p>`;
+  }
+  renderNotifs();
+  window.markAllRead = function(){ NotifsAPI.markAllRead(user.id); renderNotifs(); paintUserBadge(); };
+
+  document.getElementById('profAvatar').textContent = user.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+  document.getElementById('profName').textContent = user.name;
+  document.getElementById('profEmail').textContent = user.email;
+  document.getElementById('profArea').textContent = user.area || 'No area set';
+}
+</script>
+</body>
+</html>

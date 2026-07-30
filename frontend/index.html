@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Civic Connect — Smart Public Issue Reporting</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/aos@2.3.1/dist/aos.css">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="brand"><span class="dot"></span> CIVIC CONNECT</div>
+  <button class="hamburger icon-btn"><i class="fa-solid fa-bars"></i></button>
+  <ul class="nav-links">
+    <li><a href="index.html" class="active" data-i18n="nav_home">Home</a></li>
+    <li><a href="report-issue.html" data-i18n="nav_report">Report Issue</a></li>
+    <li><a href="track-complaint.html" data-i18n="nav_track">Track Complaint</a></li>
+    <li><a href="map.html" data-i18n="nav_map">Live Map</a></li>
+    <li><a href="analytics.html" data-i18n="nav_analytics">Analytics</a></li>
+  </ul>
+  <div class="flex gap-12">
+    <div class="lang-toggle">
+      <span data-lang="en" onclick="applyLang('en')" class="active">EN</span>
+      <span data-lang="ta" onclick="applyLang('ta')">தமிழ்</span>
+    </div>
+    <div class="theme-toggle" onclick="toggleTheme()"><div class="knob"><i class="fa-solid fa-moon"></i></div></div>
+    <div class="flex gap-12" id="navUserSlot"></div>
+  </div>
+</nav>
+
+<section class="hero">
+  <div class="city-grid"></div>
+  <div class="container" style="position:relative; z-index:1;">
+    <div data-aos="fade-up">
+      <span class="hero-badge glass" style="color:var(--teal); border:1px solid var(--teal);"><i class="fa-solid fa-tower-broadcast"></i> <span data-i18n="hero_badge">Smart City · Public Grievance Platform</span></span>
+      <h1 data-i18n="hero_title">Report it once.<br>We route it right.</h1>
+      <p class="lead" data-i18n="hero_lead">Civic Connect gets road damage, garbage overflow, water leaks and more in front of the correct municipal department in minutes — not weeks.</p>
+      <div class="flex gap-16" style="flex-wrap:wrap;">
+        <a href="report-issue.html" class="btn btn-primary"><i class="fa-solid fa-circle-plus"></i> <span data-i18n="hero_cta_report">Report an Issue</span></a>
+        <a href="track-complaint.html" class="btn btn-outline"><i class="fa-solid fa-magnifying-glass-location"></i> <span data-i18n="hero_cta_track">Track a Complaint</span></a>
+      </div>
+      <div class="hero-stats" id="heroStats"></div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <div class="flex-between" data-aos="fade-up">
+      <h2 data-i18n="section_categories">What can you report?</h2>
+      <span class="text-muted mono">9 categories · auto-routed</span>
+    </div>
+    <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); margin-top:28px;" id="categoryGrid"></div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <div class="glass card" data-aos="fade-up" style="display:flex; gap:32px; flex-wrap:wrap; align-items:center; justify-content:space-between;">
+      <div style="max-width:480px;">
+        <h2 style="margin-bottom:10px;">How it flows</h2>
+        <p class="text-muted">Every complaint moves through a transparent, trackable pipeline — no black boxes.</p>
+      </div>
+      <div class="status-flow" style="flex:1; min-width:320px;">
+        <div class="step done"><div class="circle"><i class="fa-solid fa-check"></i></div><span>Pending</span></div>
+        <div class="step done"><div class="circle"><i class="fa-solid fa-check"></i></div><span>Verified</span></div>
+        <div class="step current"><div class="circle">3</div><span>Assigned</span></div>
+        <div class="step"><div class="circle">4</div><span>In Progress</span></div>
+        <div class="step"><div class="circle">5</div><span>Resolved</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container grid" style="grid-template-columns:repeat(auto-fit,minmax(260px,1fr));" data-aos="fade-up">
+    <div class="glass card">
+      <i class="fa-solid fa-robot" style="color:var(--teal); font-size:1.5rem;"></i>
+      <h3 style="margin:14px 0 8px;">AI Duplicate Detection</h3>
+      <p class="text-muted">Nearby reports of the same issue are automatically linked instead of stacking up as noise.</p>
+    </div>
+    <div class="glass card">
+      <i class="fa-solid fa-qrcode" style="color:var(--indigo); font-size:1.5rem;"></i>
+      <h3 style="margin:14px 0 8px;">QR Complaint Tracking</h3>
+      <p class="text-muted">Every complaint gets a scannable QR code so anyone can check status instantly.</p>
+    </div>
+    <div class="glass card">
+      <i class="fa-solid fa-language" style="color:var(--amber); font-size:1.5rem;"></i>
+      <h3 style="margin:14px 0 8px;">English &amp; தமிழ்</h3>
+      <p class="text-muted">A fully bilingual interface so every citizen can report comfortably in their language.</p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="container">© 2026 Civic Connect · A Smart City Municipal Initiative · Built for citizens, by citizens.</div>
+</footer>
+
+<a href="report-issue.html" class="fab" title="Report an Issue"><i class="fa-solid fa-plus"></i></a>
+
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+<script src="js/db.js"></script>
+<script src="js/common.js"></script>
+<script src="js/grid-bg.js"></script>
+<script>
+  const catGrid = document.getElementById('categoryGrid');
+  const colorCycle = ['var(--teal)','var(--indigo)','var(--amber)'];
+  CATEGORIES.forEach((c,i)=>{
+    const div = document.createElement('div');
+    div.className = 'glass card';
+    div.setAttribute('data-aos','fade-up');
+    div.innerHTML = `
+      <div class="category-icon" style="background:${colorCycle[i%3]}22; color:${colorCycle[i%3]};"><i class="fa-solid ${c.icon}"></i></div>
+      <h3 style="font-size:1.02rem; margin-bottom:6px;">${c.label}</h3>
+      <p class="text-low" style="font-size:.82rem;">Routed to ${c.dept}</p>
+    `;
+    catGrid.appendChild(div);
+  });
+
+  const stats = ComplaintsAPI.stats();
+  document.getElementById('heroStats').innerHTML = `
+    <div><b class="mono">${stats.total}</b><span class="text-muted">Total Reports</span></div>
+    <div><b class="mono" style="color:var(--red)">${stats.pending}</b><span class="text-muted">Pending</span></div>
+    <div><b class="mono" style="color:var(--yellow)">${stats.inProgress}</b><span class="text-muted">In Progress</span></div>
+    <div><b class="mono" style="color:var(--green)">${stats.resolved}</b><span class="text-muted">Resolved</span></div>
+  `;
+</script>
+</body>
+</html>

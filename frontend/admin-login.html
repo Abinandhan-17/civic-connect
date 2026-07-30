@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Login — Civic Connect</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body>
+<div class="auth-wrap">
+  <div class="city-grid" style="position:fixed;"></div>
+  <div class="glass auth-card" style="position:relative; z-index:1; border-color:rgba(108,123,247,0.4);">
+    <div class="auth-logo"><i class="fa-solid fa-user-shield" style="color:var(--indigo);"></i> ADMIN ACCESS</div>
+    <p class="text-muted center" style="margin-bottom:26px;">Municipal Corporation Staff Login</p>
+
+    <div class="glass" style="padding:12px 16px; margin-bottom:20px; font-size:.82rem; border-color:var(--indigo);">
+      <b>Demo login</b> — admin@civicconnect.gov / admin123
+    </div>
+
+    <form id="adminLoginForm">
+      <div class="field">
+        <label>Official Email</label>
+        <div class="input-icon-wrap"><i class="fa-solid fa-envelope"></i><input class="input" type="email" id="email" placeholder="admin@civicconnect.gov" required></div>
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <div class="input-icon-wrap"><i class="fa-solid fa-lock"></i><input class="input" type="password" id="password" placeholder="Your password" required></div>
+      </div>
+      <button class="btn btn-block" style="background:linear-gradient(135deg,var(--indigo),#8b5cf6); color:#fff;" type="submit"><i class="fa-solid fa-shield-halved"></i> Admin Login</button>
+    </form>
+
+    <div class="divider"></div>
+    <p class="center text-muted">Not an admin? <a href="login.html" style="color:var(--teal); font-weight:600;">Citizen Login</a></p>
+  </div>
+</div>
+
+<script src="js/db.js"></script>
+<script src="js/common.js"></script>
+<script src="js/grid-bg.js"></script>
+<script>
+document.getElementById('adminLoginForm').addEventListener('submit', function(e){
+  e.preventDefault();
+  try{
+    UsersAPI.login(document.getElementById('email').value.trim(), document.getElementById('password').value, 'admin');
+    window.location.href = 'admin-dashboard.html';
+  }catch(err){
+    Swal.fire({icon:'error', title:'Access denied', text: err.message, background:'var(--bg-1)', color:'var(--text-hi)', confirmButtonColor:'#ff5d6c'});
+  }
+});
+</script>
+</body>
+</html>

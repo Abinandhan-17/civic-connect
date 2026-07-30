@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Citizen Registration — Civic Connect</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body>
+<div class="auth-wrap">
+  <div class="city-grid" style="position:fixed;"></div>
+  <div class="glass auth-card" style="position:relative; z-index:1;">
+    <div class="auth-logo"><span class="dot" style="width:11px;height:11px;border-radius:50%;background:var(--teal);"></span> CIVIC CONNECT</div>
+    <p class="text-muted center" style="margin-bottom:26px;">Create your citizen account</p>
+
+    <form id="regForm">
+      <div class="field">
+        <label>Full Name</label>
+        <div class="input-icon-wrap"><i class="fa-solid fa-user"></i><input class="input" id="name" placeholder="Arun Kumar" required></div>
+      </div>
+      <div class="field">
+        <label>Email Address</label>
+        <div class="input-icon-wrap"><i class="fa-solid fa-envelope"></i><input class="input" type="email" id="email" placeholder="you@example.com" required></div>
+      </div>
+      <div class="field">
+        <label>Phone Number</label>
+        <div class="input-icon-wrap"><i class="fa-solid fa-phone"></i><input class="input" id="phone" placeholder="98765 43210" required pattern="[0-9]{10}"></div>
+      </div>
+      <div class="field">
+        <label>Area / Locality</label>
+        <div class="input-icon-wrap"><i class="fa-solid fa-location-dot"></i><input class="input" id="area" placeholder="e.g. RS Puram, Coimbatore"></div>
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <div class="input-icon-wrap"><i class="fa-solid fa-lock"></i><input class="input" type="password" id="password" placeholder="Minimum 6 characters" required minlength="6"></div>
+      </div>
+      <button class="btn btn-primary btn-block" type="submit"><i class="fa-solid fa-user-plus"></i> Create Account</button>
+    </form>
+
+    <div class="divider"></div>
+    <p class="center text-muted">Already have an account? <a href="login.html" style="color:var(--teal); font-weight:600;">Login here</a></p>
+    <p class="center text-muted" style="margin-top:6px;">Are you a municipal official? <a href="admin-login.html" style="color:var(--indigo); font-weight:600;">Admin Login</a></p>
+  </div>
+</div>
+
+<script src="js/api.js"></script>
+<script src="js/db.js"></script>
+<script src="js/common.js"></script>
+<script src="js/grid-bg.js"></script>
+<script>
+document.getElementById("regForm").addEventListener("submit", async function(e){
+
+    e.preventDefault();
+
+    try{
+
+        await AuthAPI.register({
+
+            name: document.getElementById("name").value.trim(),
+            email: document.getElementById("email").value.trim(),
+            phone: document.getElementById("phone").value.trim(),
+            area: document.getElementById("area").value.trim(),
+            password: document.getElementById("password").value
+
+        });
+
+        Swal.fire({
+
+            icon:"success",
+            title:"Registration Successful",
+            text:"Account created successfully.",
+
+        }).then(()=>{
+
+            window.location.href="login.html";
+
+        });
+
+    }
+    catch(err){
+
+        Swal.fire({
+
+            icon:"error",
+            title:"Registration Failed",
+            text:err.message
+
+        });
+
+    }
+
+});
+</script>
+</body>
+</html>

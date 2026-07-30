@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Profile — Civic Connect</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="brand"><span class="dot"></span> CIVIC CONNECT</div>
+  <button class="hamburger icon-btn"><i class="fa-solid fa-bars"></i></button>
+  <ul class="nav-links">
+    <li><a href="index.html" data-i18n="nav_home">Home</a></li>
+    <li><a href="dashboard.html" data-i18n="nav_dashboard">Dashboard</a></li>
+    <li><a href="report-issue.html" data-i18n="nav_report">Report Issue</a></li>
+    <li><a href="track-complaint.html" data-i18n="nav_track">Track Complaint</a></li>
+  </ul>
+  <div class="flex gap-12">
+    <div class="theme-toggle" onclick="toggleTheme()"><div class="knob"><i class="fa-solid fa-moon"></i></div></div>
+    <div class="flex gap-12" id="navUserSlot"></div>
+  </div>
+</nav>
+
+<div class="container section" style="max-width:640px;">
+  <h2 style="margin-bottom:22px;"><i class="fa-solid fa-user-gear" style="color:var(--teal);"></i> Manage Profile</h2>
+
+  <div class="glass card">
+    <div class="flex gap-16" style="margin-bottom:24px;">
+      <div class="avatar" id="pAvatar" style="width:64px; height:64px; font-size:1.3rem;"></div>
+      <div>
+        <div style="font-weight:700; font-size:1.1rem;" id="pName"></div>
+        <div class="text-muted" id="pRole">Citizen</div>
+      </div>
+    </div>
+
+    <form id="profileForm">
+      <div class="field"><label>Full Name</label><input class="input" id="fName"></div>
+      <div class="field"><label>Email Address</label><input class="input" id="fEmail" disabled style="opacity:.6;"></div>
+      <div class="field"><label>Phone Number</label><input class="input" id="fPhone"></div>
+      <div class="field"><label>Area / Locality</label><input class="input" id="fArea"></div>
+      <button class="btn btn-primary btn-block" type="submit"><i class="fa-solid fa-floppy-disk"></i> Save Changes</button>
+    </form>
+
+    <div class="divider"></div>
+    <h3 style="font-size:.95rem; margin-bottom:14px;">Change Password</h3>
+    <form id="passForm">
+      <div class="field"><label>New Password</label><input class="input" type="password" id="newPassword" minlength="6" placeholder="Minimum 6 characters"></div>
+      <button class="btn btn-outline btn-block" type="submit"><i class="fa-solid fa-key"></i> Update Password</button>
+    </form>
+  </div>
+</div>
+
+<script src="js/db.js"></script>
+<script src="js/common.js"></script>
+<script>
+const user = requireAuth('citizen');
+if(user){
+  document.getElementById('pAvatar').textContent = user.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+  document.getElementById('pName').textContent = user.name;
+  document.getElementById('fName').value = user.name;
+  document.getElementById('fEmail').value = user.email;
+  document.getElementById('fPhone').value = user.phone;
+  document.getElementById('fArea').value = user.area || '';
+}
+document.getElementById('profileForm').addEventListener('submit', e=>{
+  e.preventDefault();
+  UsersAPI.updateProfile(user.id, { name:document.getElementById('fName').value.trim(), phone:document.getElementById('fPhone').value.trim(), area:document.getElementById('fArea').value.trim() });
+  Swal.fire({icon:'success', title:'Profile updated', background:'var(--bg-1)', color:'var(--text-hi)', confirmButtonColor:'#17d6c4'}).then(()=>location.reload());
+});
+document.getElementById('passForm').addEventListener('submit', e=>{
+  e.preventDefault();
+  const pass = document.getElementById('newPassword').value;
+  if(pass.length<6){ Swal.fire({icon:'warning', title:'Too short', background:'var(--bg-1)', color:'var(--text-hi)'}); return; }
+  UsersAPI.updateProfile(user.id, { password:pass });
+  document.getElementById('newPassword').value='';
+  Swal.fire({icon:'success', title:'Password updated', background:'var(--bg-1)', color:'var(--text-hi)', confirmButtonColor:'#17d6c4'});
+});
+</script>
+</body>
+</html>

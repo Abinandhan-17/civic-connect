@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Report an Issue — Civic Connect</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/aos@2.3.1/dist/aos.css">
+<link rel="stylesheet" href="css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="brand"><span class="dot"></span> CIVIC CONNECT</div>
+  <button class="hamburger icon-btn"><i class="fa-solid fa-bars"></i></button>
+  <ul class="nav-links">
+    <li><a href="index.html" data-i18n="nav_home">Home</a></li>
+    <li><a href="dashboard.html" data-i18n="nav_dashboard">Dashboard</a></li>
+    <li><a href="report-issue.html" class="active" data-i18n="nav_report">Report Issue</a></li>
+    <li><a href="track-complaint.html" data-i18n="nav_track">Track Complaint</a></li>
+    <li><a href="map.html" data-i18n="nav_map">Live Map</a></li>
+  </ul>
+  <div class="flex gap-12">
+    <div class="theme-toggle" onclick="toggleTheme()"><div class="knob"><i class="fa-solid fa-moon"></i></div></div>
+    <div class="flex gap-12" id="navUserSlot"></div>
+  </div>
+</nav>
+
+<div class="container section" style="max-width:820px;">
+  <div data-aos="fade-up" style="margin-bottom:26px;">
+    <h2><i class="fa-solid fa-circle-plus" style="color:var(--teal);"></i> Report a Public Issue</h2>
+    <p class="text-muted">Give us the details — we'll route it to the right department automatically.</p>
+  </div>
+
+  <form id="reportForm" class="glass card" data-aos="fade-up">
+
+    <div class="field">
+      <label>1. Select Issue Category</label>
+      <div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(140px,1fr));" id="catPicker"></div>
+      <input type="hidden" id="category" required>
+    </div>
+
+    <div class="field">
+      <label>2. Issue Title</label>
+      <input class="input" id="title" placeholder="e.g. Large pothole near bus stop" required>
+    </div>
+
+    <div class="field">
+      <label>3. Description</label>
+      <textarea class="input" id="description" rows="4" placeholder="Describe the issue in detail — size, severity, how long it's been there..." required></textarea>
+    </div>
+
+    <div class="field">
+      <label>4. Severity Level</label>
+      <div class="severity-group">
+        <div class="severity-opt low" data-val="Low"><i class="fa-solid fa-circle-info"></i> Low</div>
+        <div class="severity-opt medium active" data-val="Medium"><i class="fa-solid fa-triangle-exclamation"></i> Medium</div>
+        <div class="severity-opt high" data-val="High"><i class="fa-solid fa-fire"></i> High / Emergency</div>
+      </div>
+      <input type="hidden" id="severity" value="Medium">
+    </div>
+
+    <div class="grid" style="grid-template-columns:1fr 1fr; gap:20px;">
+      <div class="field">
+        <label>5. Upload Photo Evidence</label>
+        <label for="photoInput" class="glass" style="display:flex; flex-direction:column; align-items:center; justify-content:center; padding:26px; border:1.5px dashed var(--glass-border); border-radius:14px; cursor:pointer; min-height:150px;">
+          <img id="photoPreview" class="hidden" style="max-height:110px; border-radius:10px; margin-bottom:8px;">
+          <i class="fa-solid fa-camera" id="photoIcon" style="font-size:1.6rem; color:var(--text-low); margin-bottom:8px;"></i>
+          <span class="text-muted" style="font-size:.82rem;" id="photoLabel">Click to upload a photo</span>
+        </label>
+        <input type="file" id="photoInput" accept="image/*" class="hidden">
+      </div>
+
+      <div class="field">
+        <label>6. GPS Location</label>
+        <div class="glass" style="padding:20px; border-radius:14px; min-height:150px; display:flex; flex-direction:column; justify-content:center;">
+          <button type="button" class="btn btn-outline btn-block" onclick="captureLocation()"><i class="fa-solid fa-location-crosshairs"></i> Capture Current Location</button>
+          <div id="locResult" class="text-muted mono" style="font-size:.78rem; margin-top:12px;">No location captured yet.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Area / Locality (auto-filled if GPS captured)</label>
+      <input class="input" id="area" placeholder="e.g. Gandhipuram, Coimbatore">
+    </div>
+
+    <div id="voiceSection" class="field">
+      <label>Optional: Voice Complaint Recording</label>
+      <div class="glass flex gap-12" style="padding:14px; border-radius:12px;">
+        <button type="button" class="icon-btn" id="voiceBtn" onclick="toggleVoiceRecording()"><i class="fa-solid fa-microphone"></i></button>
+        <span class="text-muted" id="voiceStatus" style="font-size:.85rem;">Tap to record a short voice note describing the issue.</span>
+      </div>
+    </div>
+
+    <button class="btn btn-primary btn-block" type="submit" style="margin-top:8px;"><i class="fa-solid fa-paper-plane"></i> <span data-i18n="btn_submit">Submit Complaint</span></button>
+  </form>
+</div>
+
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+<script src="js/db.js"></script>
+<script src="js/common.js"></script>
+<script>
+const user = requireAuth('citizen');
+let capturedLat = null, capturedLng = null;
+
+/* category picker */
+const catPicker = document.getElementById('catPicker');
+CATEGORIES.forEach(c=>{
+  const div = document.createElement('div');
+  div.className='glass'; div.style.cssText='padding:16px 10px; text-align:center; cursor:pointer; border-radius:12px; transition:.2s;';
+  div.innerHTML = `<i class="fa-solid ${c.icon}" style="font-size:1.2rem; display:block; margin-bottom:8px; color:var(--text-mid);"></i><span style="font-size:.75rem; font-weight:600;">${c.label}</span>`;
+  div.onclick = ()=>{
+    document.querySelectorAll('#catPicker > div').forEach(d=>{ d.style.borderColor='var(--glass-border)'; d.style.background='var(--glass-bg)'; });
+    div.style.borderColor='var(--teal)'; div.style.background='rgba(23,214,196,0.1)';
+    document.getElementById('category').value = c.id;
+  };
+  catPicker.appendChild(div);
+});
+
+/* severity */
+document.querySelectorAll('.severity-opt').forEach(opt=>{
+  opt.onclick = ()=>{
+    document.querySelectorAll('.severity-opt').forEach(o=>o.classList.remove('active'));
+    opt.classList.add('active');
+    document.getElementById('severity').value = opt.dataset.val;
+  };
+});
+
+/* photo upload + preview */
+document.getElementById('photoInput').addEventListener('change', function(e){
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = ev=>{
+    document.getElementById('photoPreview').src = ev.target.result;
+    document.getElementById('photoPreview').classList.remove('hidden');
+    document.getElementById('photoIcon').classList.add('hidden');
+    document.getElementById('photoLabel').textContent = file.name;
+  };
+  reader.readAsDataURL(file);
+});
+
+/* geolocation */
+function captureLocation(){
+  const box = document.getElementById('locResult');
+  box.textContent = 'Requesting location access...';
+  if(!navigator.geolocation){ box.textContent = 'Geolocation not supported on this device.'; return; }
+  navigator.geolocation.getCurrentPosition(pos=>{
+    capturedLat = pos.coords.latitude; capturedLng = pos.coords.longitude;
+    box.textContent = `Lat: ${capturedLat.toFixed(5)}, Lng: ${capturedLng.toFixed(5)} ✓`;
+    if(!document.getElementById('area').value) document.getElementById('area').value = 'Near captured GPS point';
+  }, err=>{
+    box.textContent = 'Could not get location: ' + err.message + ' (using default city center)';
+    capturedLat = 11.0168; capturedLng = 76.9558;
+  });
+}
+
+/* voice recording (visual only demo, uses MediaRecorder if available) */
+let recording = false, mediaRecorder;
+function toggleVoiceRecording(){
+  const btn = document.getElementById('voiceBtn'), status = document.getElementById('voiceStatus');
+  if(!recording){
+    if(navigator.mediaDevices && navigator.mediaDevices.getUserMedia){
+      navigator.mediaDevices.getUserMedia({audio:true}).then(stream=>{
+        mediaRecorder = new MediaRecorder(stream);
+        mediaRecorder.start();
+        recording = true; btn.style.background='var(--red)'; btn.style.color='#fff'; status.textContent='Recording... tap again to stop.';
+      }).catch(()=>{ status.textContent = 'Microphone access denied.'; });
+    } else { status.textContent = 'Voice recording not supported on this browser.'; }
+  } else {
+    if(mediaRecorder) mediaRecorder.stop();
+    recording = false; btn.style.background=''; btn.style.color=''; status.textContent = 'Voice note attached ✓';
+  }
+}
+
+/* submit */
+document.getElementById('reportForm').addEventListener('submit', function(e){
+  e.preventDefault();
+  const category = document.getElementById('category').value;
+  if(!category){ Swal.fire({icon:'warning', title:'Pick a category', background:'var(--bg-1)', color:'var(--text-hi)'}); return; }
+  const lat = capturedLat ?? (11.0168 + (Math.random()-0.5)*0.02);
+  const lng = capturedLng ?? (76.9558 + (Math.random()-0.5)*0.02);
+
+  const dupes = ComplaintsAPI.findDuplicates({category, lat, lng});
+  const proceed = ()=>{
+    const complaint = ComplaintsAPI.create({
+      userId:user.id, userName:user.name, category,
+      title: document.getElementById('title').value.trim(),
+      description: document.getElementById('description').value.trim(),
+      severity: document.getElementById('severity').value,
+      area: document.getElementById('area').value.trim() || 'Unspecified',
+      lat, lng,
+      photo: document.getElementById('photoPreview').src && !document.getElementById('photoPreview').classList.contains('hidden') ? document.getElementById('photoPreview').src : null
+    });
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=170x170&data=${encodeURIComponent('CIVIC-CONNECT-TRACK:'+complaint.id)}`;
+    Swal.fire({
+      title:'Complaint Submitted!',
+      html:`<p style="margin-bottom:10px;">Your complaint ID is <b class="mono">${complaint.id}</b></p><img src="${qrUrl}" style="border-radius:10px;"><p style="margin-top:10px; font-size:.8rem;">Scan to track anytime</p>`,
+      icon:'success', background:'var(--bg-1)', color:'var(--text-hi)', confirmButtonColor:'#17d6c4', confirmButtonText:'Go to my complaints'
+    }).then(()=> window.location.href = `track-complaint.html?id=${complaint.id}`);
+  };
+
+  if(dupes.length){
+    Swal.fire({
+      icon:'info', title:'Possible duplicate detected',
+      html:`Our AI found <b>${dupes.length}</b> similar open complaint(s) nearby (e.g. <span class="mono">${dupes[0].id}</span>). Submit anyway?`,
+      showCancelButton:true, confirmButtonText:'Submit anyway', cancelButtonText:'Cancel',
+      background:'var(--bg-1)', color:'var(--text-hi)', confirmButtonColor:'#f6b93b'
+    }).then(res=>{ if(res.isConfirmed) proceed(); });
+  } else { proceed(); }
+});
+</script>
+</body>
+</html>

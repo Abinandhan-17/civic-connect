@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Track Complaint — Civic Connect</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/aos@2.3.1/dist/aos.css">
+<link rel="stylesheet" href="css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="brand"><span class="dot"></span> CIVIC CONNECT</div>
+  <button class="hamburger icon-btn"><i class="fa-solid fa-bars"></i></button>
+  <ul class="nav-links">
+    <li><a href="index.html" data-i18n="nav_home">Home</a></li>
+    <li><a href="dashboard.html" data-i18n="nav_dashboard">Dashboard</a></li>
+    <li><a href="report-issue.html" data-i18n="nav_report">Report Issue</a></li>
+    <li><a href="track-complaint.html" class="active" data-i18n="nav_track">Track Complaint</a></li>
+    <li><a href="map.html" data-i18n="nav_map">Live Map</a></li>
+  </ul>
+  <div class="flex gap-12">
+    <div class="theme-toggle" onclick="toggleTheme()"><div class="knob"><i class="fa-solid fa-moon"></i></div></div>
+    <div class="flex gap-12" id="navUserSlot"></div>
+  </div>
+</nav>
+
+<div class="container section">
+  <div id="listView">
+    <div class="flex-between" data-aos="fade-up" style="flex-wrap:wrap; gap:14px; margin-bottom:22px;">
+      <div><h2>Track Your Complaints</h2><p class="text-muted">Search by ID, category, or status.</p></div>
+      <a href="report-issue.html" class="btn btn-primary"><i class="fa-solid fa-plus"></i> New Complaint</a>
+    </div>
+
+    <div class="glass card" data-aos="fade-up" style="margin-bottom:22px;">
+      <div class="grid" style="grid-template-columns:2fr 1fr 1fr; gap:14px;">
+        <div class="input-icon-wrap"><i class="fa-solid fa-magnifying-glass"></i><input class="input" id="searchBox" placeholder="Search by Complaint ID or keyword..."></div>
+        <select class="input" id="statusFilter"><option value="">All Statuses</option><option>Pending</option><option>Verified</option><option>Assigned</option><option>In Progress</option><option>Resolved</option></select>
+        <select class="input" id="catFilter"><option value="">All Categories</option></select>
+      </div>
+    </div>
+
+    <div class="grid" id="complaintCards" style="grid-template-columns:repeat(auto-fill,minmax(310px,1fr));"></div>
+  </div>
+
+  <div id="detailView" class="hidden">
+    <button class="btn btn-ghost btn-sm" onclick="showList()" style="margin-bottom:20px;"><i class="fa-solid fa-arrow-left"></i> Back to list</button>
+    <div id="detailContent"></div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+<script src="js/db.js"></script>
+<script src="js/common.js"></script>
+<script>
+const user = requireAuth('citizen');
+const catFilter = document.getElementById('catFilter');
+CATEGORIES.forEach(c=> catFilter.innerHTML += `<option value="${c.id}">${c.label}</option>`);
+
+function renderList(){
+  const q = document.getElementById('searchBox').value.toLowerCase();
+  const st = document.getElementById('statusFilter').value;
+  const cat = catFilter.value;
+  let list = ComplaintsAPI.byUser(user.id);
+  if(q) list = list.filter(c=> c.id.toLowerCase().includes(q) || c.title.toLowerCase().includes(q));
+  if(st) list = list.filter(c=> c.status === st);
+  if(cat) list = list.filter(c=> c.category === cat);
+
+  const wrap = document.getElementById('complaintCards');
+  wrap.innerHTML = list.length ? list.map(c=>`
+    <div class="glass card" data-aos="fade-up">
+      <div class="flex-between" style="margin-bottom:10px;">
+        <span class="mono text-muted" style="font-size:.8rem;">${c.id}</span>
+        <span class="badge ${statusBadgeClass(c.status)}">${c.status}</span>
+      </div>
+      <h3 style="font-size:1rem; margin-bottom:6px;">${c.title}</h3>
+      <p class="text-muted" style="font-size:.82rem; margin-bottom:10px;">${c.categoryLabel} · <i class="fa-solid fa-location-dot"></i> ${c.area}</p>
+      <div class="progress-track" style="margin-bottom:10px;"><div class="progress-fill" style="width:${progressPct(c.status)}%"></div></div>
+      <div class="flex-between">
+        <span class="badge ${severityBadgeClass(c.severity)}">${c.severity}</span>
+        <button class="btn btn-outline btn-sm" onclick="showDetail('${c.id}')"><i class="fa-solid fa-eye"></i> View Details</button>
+      </div>
+    </div>`).join('') : `<div class="glass card center text-muted" style="grid-column:1/-1; padding:50px;">No complaints match your filters.</div>`;
+}
+function progressPct(status){ return { 'Pending':10,'Verified':30,'Assigned':50,'In Progress':75,'Resolved':100 }[status] || 5; }
+['searchBox','statusFilter','catFilter'].forEach(id=> document.getElementById(id).addEventListener('input', renderList));
+renderList();
+
+function showList(){
+  document.getElementById('detailView').classList.add('hidden');
+  document.getElementById('listView').classList.remove('hidden');
+  history.replaceState(null,'','track-complaint.html');
+}
+
+function showDetail(id){
+  const c = ComplaintsAPI.byId(id);
+  if(!c) return;
+  document.getElementById('listView').classList.add('hidden');
+  document.getElementById('detailView').classList.remove('hidden');
+  const flowIdx = STATUS_FLOW.indexOf(c.status);
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent('CIVIC-CONNECT-TRACK:'+c.id)}`;
+  const shareUrl = `${location.origin}${location.pathname}?id=${c.id}`;
+
+  document.getElementById('detailContent').innerHTML = `
+    <div class="grid" style="grid-template-columns:2fr 1fr; gap:22px; align-items:start;">
+      <div class="glass card">
+        <div class="flex-between" style="flex-wrap:wrap; gap:10px;">
+          <div><span class="mono text-muted">${c.id}</span><h2 style="margin-top:4px;">${c.title}</h2></div>
+          <span class="badge ${statusBadgeClass(c.status)}" style="font-size:.85rem;">${c.status}</span>
+        </div>
+        <p class="text-muted" style="margin:14px 0;">${c.description}</p>
+        ${c.photo ? `<img src="${c.photo}" style="border-radius:12px; max-height:220px; margin-bottom:16px;">` : ''}
+
+        <div class="status-flow">
+          ${STATUS_FLOW.map((s,i)=>`
+            <div class="step ${i<flowIdx?'done':i===flowIdx?'current':''}">
+              <div class="circle">${i<flowIdx?'<i class="fa-solid fa-check"></i>':i+1}</div><span>${s}</span>
+            </div>`).join('')}
+        </div>
+        <div class="progress-track"><div class="progress-fill" style="width:${progressPct(c.status)}%"></div></div>
+
+        <div class="divider"></div>
+        <h3 style="margin-bottom:12px; font-size:1rem;">Timeline &amp; Remarks</h3>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          ${c.history.map(h=>`<div class="flex gap-12"><span class="badge ${statusBadgeClass(h.status)}" style="min-width:90px;">${h.status}</span><span class="text-muted" style="font-size:.82rem;">${formatDate(h.at)}</span></div>`).join('')}
+          ${c.remarks.map(r=>`<div class="glass" style="padding:10px 14px; font-size:.85rem;"><i class="fa-solid fa-comment-dots" style="color:var(--indigo);"></i> ${r.text} <span class="text-low" style="font-size:.72rem;"> — ${formatDate(r.at)}</span></div>`).join('')}
+        </div>
+
+        ${c.status==='Resolved' && c.completionPhoto ? `<div class="divider"></div><h3 style="margin-bottom:10px; font-size:1rem;">Completion Proof</h3><img src="${c.completionPhoto}" style="border-radius:12px; max-height:200px;">` : ''}
+
+        ${c.status==='Resolved' ? `
+        <div class="divider"></div>
+        <h3 style="margin-bottom:10px; font-size:1rem;">Rate this Resolution</h3>
+        ${c.rating ? `<div class="rating-stars">${[1,2,3,4,5].map(n=>`<i class="fa-solid fa-star ${n<=c.rating?'active':''}"></i>`).join('')}</div><p class="text-muted" style="font-size:.85rem; margin-top:6px;">${c.feedback||''}</p>`
+        : `<div class="rating-stars" id="ratingStars">${[1,2,3,4,5].map(n=>`<i class="fa-regular fa-star" data-val="${n}"></i>`).join('')}</div>
+           <textarea class="input" id="feedbackText" rows="2" placeholder="Leave feedback (optional)" style="margin-top:10px;"></textarea>
+           <button class="btn btn-primary btn-sm" style="margin-top:10px;" onclick="submitRating('${c.id}')"><i class="fa-solid fa-paper-plane"></i> Submit Feedback</button>`}
+        ` : ''}
+      </div>
+
+      <div>
+        <div class="glass card center" style="margin-bottom:18px;">
+          <p class="text-muted" style="font-size:.82rem; margin-bottom:10px;">Scan to track</p>
+          <img src="${qrUrl}" style="border-radius:10px; margin:0 auto;">
+        </div>
+        <div class="glass card">
+          <div class="flex-between" style="margin-bottom:10px;"><span class="text-muted">Department</span><b>${c.department}</b></div>
+          <div class="flex-between" style="margin-bottom:10px;"><span class="text-muted">Severity</span><span class="badge ${severityBadgeClass(c.severity)}">${c.severity}</span></div>
+          <div class="flex-between" style="margin-bottom:10px;"><span class="text-muted">Area</span><b>${c.area}</b></div>
+          <div class="flex-between" style="margin-bottom:10px;"><span class="text-muted">Filed</span><span style="font-size:.82rem;">${formatDate(c.createdAt)}</span></div>
+          <div class="flex-between"><span class="text-muted">Updated</span><span style="font-size:.82rem;">${formatDate(c.updatedAt)}</span></div>
+          <div class="divider"></div>
+          <button class="btn btn-outline btn-block btn-sm" onclick="shareComplaint('${shareUrl}','${c.id}')"><i class="fa-solid fa-share-nodes"></i> Share Complaint</button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  if(!c.rating && c.status==='Resolved'){
+    let selected = 0;
+    document.querySelectorAll('#ratingStars i').forEach(star=>{
+      star.addEventListener('click', ()=>{
+        selected = +star.dataset.val;
+        document.querySelectorAll('#ratingStars i').forEach(s=>{
+          const v = +s.dataset.val;
+          s.className = v<=selected ? 'fa-solid fa-star active' : 'fa-regular fa-star';
+        });
+      });
+    });
+    window.currentSelectedRating = ()=> selected;
+  }
+}
+function submitRating(id){
+  const rating = window.currentSelectedRating ? window.currentSelectedRating() : 0;
+  if(!rating){ Swal.fire({icon:'warning', title:'Please select a star rating', background:'var(--bg-1)', color:'var(--text-hi)'}); return; }
+  ComplaintsAPI.addRating(id, rating, document.getElementById('feedbackText').value.trim());
+  Swal.fire({icon:'success', title:'Thanks for your feedback!', background:'var(--bg-1)', color:'var(--text-hi)', confirmButtonColor:'#17d6c4'}).then(()=> showDetail(id));
+}
+function shareComplaint(url, id){
+  if(navigator.share){ navigator.share({title:'Civic Connect Complaint '+id, url}); }
+  else { navigator.clipboard.writeText(url); Swal.fire({icon:'success', title:'Link copied!', text:url, background:'var(--bg-1)', color:'var(--text-hi)', confirmButtonColor:'#17d6c4'}); }
+}
+
+/* deep link via ?id= */
+const params = new URLSearchParams(location.search);
+if(params.get('id')) showDetail(params.get('id'));
+</script>
+</body>
+</html>

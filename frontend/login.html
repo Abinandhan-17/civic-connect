@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Citizen Login — Civic Connect</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body>
+<div class="auth-wrap">
+  <div class="city-grid" style="position:fixed;"></div>
+  <div class="glass auth-card" style="position:relative; z-index:1;">
+    <div class="auth-logo"><span class="dot" style="width:11px;height:11px;border-radius:50%;background:var(--teal);"></span> CIVIC CONNECT</div>
+    <p class="text-muted center" style="margin-bottom:26px;">Log in to your citizen account</p>
+
+    <div class="glass" style="padding:12px 16px; margin-bottom:20px; font-size:.82rem; border-color:var(--teal);">
+      <b>Demo login</b> — citizen@demo.com / demo1234
+    </div>
+
+    <form id="loginForm">
+      <div class="field">
+        <label>Email Address</label>
+        <div class="input-icon-wrap"><i class="fa-solid fa-envelope"></i><input class="input" type="email" id="email" placeholder="you@example.com" required></div>
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <div class="input-icon-wrap"><i class="fa-solid fa-lock"></i><input class="input" type="password" id="password" placeholder="Your password" required></div>
+      </div>
+      <div class="flex-between" style="margin-bottom:20px;">
+        <label class="flex gap-8 text-muted" style="font-size:.85rem;"><input type="checkbox"> Remember me</label>
+        <a href="forgot-password.html" style="color:var(--teal); font-size:.85rem; font-weight:600;">Forgot password?</a>
+      </div>
+      <button class="btn btn-primary btn-block" type="submit"><i class="fa-solid fa-right-to-bracket"></i> Login</button>
+    </form>
+
+    <div class="divider"></div>
+    <p class="center text-muted">New to Civic Connect? <a href="register.html" style="color:var(--teal); font-weight:600;">Create an account</a></p>
+    <p class="center text-muted" style="margin-top:6px;">Municipal staff? <a href="admin-login.html" style="color:var(--indigo); font-weight:600;">Admin Login</a></p>
+  </div>
+</div>
+
+<script src="js/db.js"></script>
+<script src="js/api.js"></script>
+<script src="js/common.js"></script>
+<script src="js/grid-bg.js"></script>
+<script>
+document.getElementById('loginForm').addEventListener('submit', function(e){
+  e.preventDefault();
+  try{
+    const user = UsersAPI.login(document.getElementById('email').value.trim(), document.getElementById('password').value, 'citizen');
+    window.location.href = 'dashboard.html';
+  }catch(err){
+    Swal.fire({icon:'error', title:'Login failed', text: err.message, background:'var(--bg-1)', color:'var(--text-hi)', confirmButtonColor:'#ff5d6c'});
+  }
+});
+</script>
+</body>
+</html>
