@@ -6,6 +6,9 @@ const { v4: uuidv4 } = require('uuid');
 const pool = require('../config/db');
 const { verifyToken } = require('../middleware/auth');
 console.log("AUTH ROUTES LOADED");
+router.get("/test", (req, res) => {
+    res.json({ message: "Auth route working" });
+});
 
 function genId(prefix) {
   return `${prefix}-${uuidv4().slice(0, 6).toUpperCase()}`;
