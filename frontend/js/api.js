@@ -1,4 +1,4 @@
-const API_BASE = "http://localhost:5000/api";
+const API_BASE = "https://civic-connect-j3s9.onrender.com";
 
 async function api(url, options = {}) {
     const token = localStorage.getItem("token");
