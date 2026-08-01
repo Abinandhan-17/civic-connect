@@ -17,7 +17,7 @@ if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir);
 
 app.use(cors({
     origin: [
-        "https://civic-connectad.netlify.app",
+        process.env.FRONTEND_URL ||
         "http://localhost:5500",
         "http://127.0.0.1:5500"
     ],
