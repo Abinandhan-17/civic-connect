@@ -14,7 +14,15 @@ app.use('/api/auth', authRoutes);
 const uploadsDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir);
 
-app.use(cors());
+
+app.use(cors({
+    origin: [
+        "https://civic-connectad.netlify.app",
+        "http://localhost:5500",
+        "http://127.0.0.1:5500"
+    ],
+    credentials: true
+}));
 app.use(express.json({ limit: '10mb' }));
 app.use('/uploads', express.static(uploadsDir));
 
