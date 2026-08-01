@@ -1,6 +1,7 @@
 const API_BASE = "https://civic-connect-j3s9.onrender.com/api";
 
 async function api(url, options = {}) {
+
     const token = localStorage.getItem("token");
 
     const headers = {
@@ -32,6 +33,7 @@ async function api(url, options = {}) {
 const AuthAPI = {
 
     // ---------------- REGISTER ----------------
+
     async register(user) {
         return await api("/auth/register", {
             method: "POST",
@@ -40,6 +42,7 @@ const AuthAPI = {
     },
 
     // ---------------- LOGIN ----------------
+
     async login(email, password, role = "citizen") {
 
         const res = await api("/auth/login", {
@@ -58,17 +61,22 @@ const AuthAPI = {
     },
 
     // ---------------- FORGOT PASSWORD ----------------
+
     async forgotPassword(email) {
+
         return await api("/auth/forgot-password", {
             method: "POST",
             body: JSON.stringify({
                 email
             })
         });
+
     },
 
     // ---------------- RESET PASSWORD ----------------
+
     async resetPassword(email, otp, newPassword) {
+
         return await api("/auth/reset-password", {
             method: "POST",
             body: JSON.stringify({
@@ -77,35 +85,36 @@ const AuthAPI = {
                 newPassword
             })
         });
+
     },
 
-    // ---------------- CURRENT USER ----------------
-    async me() {
+    // ---------------- PROFILE ----------------
+
+    async getProfile() {
         return await api("/auth/me");
     },
 
-    // ---------------- UPDATE PROFILE ----------------
-    async updateProfile(data) {
+    async updateProfile(profile) {
+
         return await api("/auth/profile", {
             method: "PUT",
-            body: JSON.stringify(data)
+            body: JSON.stringify(profile)
         });
+
     },
 
     // ---------------- LOGOUT ----------------
+
     logout() {
         localStorage.removeItem("token");
         localStorage.removeItem("user");
     },
 
-    // ---------------- GET CURRENT USER ----------------
     currentUser() {
         return JSON.parse(localStorage.getItem("user"));
     }
 
 };
-
-// ======================================================
 
 const ComplaintAPI = {
 
@@ -126,21 +135,13 @@ const ComplaintAPI = {
 
 };
 
-// ======================================================
-
 const AdminAPI = {
 
-    async dashboard() {
+    async getDashboard() {
         return await api("/admin/dashboard");
-    },
-
-    async complaints() {
-        return await api("/admin/complaints");
     }
 
 };
-
-// ======================================================
 
 const NotificationAPI = {
 
